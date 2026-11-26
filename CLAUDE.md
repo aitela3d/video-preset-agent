@@ -33,7 +33,7 @@ Critic rubric: one clear action per clip; explicit shot size and camera motion; 
 - Each guide has a section "From my testing" with these rules from me. Do not change them:
   - Seedance: best for realistic people.
   - Kling: best for scenes without people in close-up.
-  - Wan: cheap open-source option, weaker quality.
+  - Wan: cheap option, weaker quality. (Wan 3.0 is API-only; open weights end at Wan 2.2.)
   - My consistency approach: background first, then the character on that background, then video.
 
 ## UI (single static/index.html, no frameworks, no external CDNs)

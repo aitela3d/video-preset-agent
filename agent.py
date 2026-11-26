@@ -116,7 +116,7 @@ def router(plan, usage):
         "The 'From my testing' rules come from the author's real generations and override general claims: "
         "if a person (or their face, hands, body) is a visible subject -> seedance; scenes without people in "
         "close-up (products, food, landscapes, vehicles, environments) -> kling; wan only when the idea asks "
-        "for a cheap/open-source/stylized option or quality is not critical. "
+        "for a cheap or stylized option or quality is not critical. "
         'Return JSON: {"model": "seedance" | "kling" | "wan", "reason": "<one sentence>"}.')
     out = call_llm(system, "Guides:\n" + guides + "\n\nShot plan:\n" + json.dumps(plan, indent=1),
                    ["model", "reason"], temperature=0, max_tokens=200, usage=usage)

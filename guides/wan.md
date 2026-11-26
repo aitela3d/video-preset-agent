@@ -46,7 +46,7 @@ Lens: 24mm wide-angle, 85mm telephoto, shallow or deep focus.
    Sound: soft slurp, quiet kitchen hum. No dialogue. Style: realistic food photography, cozy late-night mood.
 
 ## From my testing
-- Wan: cheap open-source option, weaker quality.
+- Wan: cheap option, weaker quality. (Wan 3.0 is API-only; open weights end at Wan 2.2.)
 - My consistency approach: background first, then the character on that background, then video.
 
 ## What changed vs Wan 2.2
