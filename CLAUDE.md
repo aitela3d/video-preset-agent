@@ -3,9 +3,7 @@
 Answer me (the user) in Russian. Code, UI text, prompts and README: English.
 
 ## Goal
-A small, reliable demo for a Prompt Engineer job interview at a generative video company.
-The agent turns a one-line idea into a model-specific, reusable video preset and critiques its own output.
-Audience: a non-technical recruiter (must be clear in 60 seconds) and later a technical interviewer (must be explainable and honest).
+Portfolio demo: a small agent that writes model-specific video prompts and critiques them. Must be clear in 60 seconds and honest about its limits.
 Do not use any company name in the repo name, UI or branding.
 
 ## Hard constraints
@@ -16,7 +14,7 @@ Do not use any company name in the repo name, UI or branding.
 - Model ID in one config constant. Pick a cheap, fast model with reliable JSON output: check current models and prices on OpenRouter before choosing and tell me why. Budget for all development and testing: $1.5. Show estimated cost per run.
 - Every LLM call: max_tokens cap, timeout, one retry, JSON validation, clear error message if it still fails.
 
-## Agent design (keep these names, I must explain them in the interview)
+## Agent design (keep these names)
 Pattern: routing + evaluator-optimizer loop (Anthropic, "Building effective agents").
 1. Planner: parse the idea into preset fields: subject, action (exactly one main action), shot size, camera motion, environment, lighting, style, duration, aspect ratio.
 2. Router: choose the target model from guides/ (Seedance / Kling / Wan) with a one-sentence reason. The user can override (Auto or a specific model).

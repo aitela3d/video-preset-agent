@@ -67,10 +67,10 @@ From the 5 saved demo runs (person close-up, product, landscape, action, food):
 
 | | min | typical | max |
 |---|---|---|---|
-| Time per run | 13 s | ~17 s | 25 s (3 rounds) |
-| Estimated cost per run | $0.004 | ~$0.006 | $0.010 |
+| Time per run | 13 s | ~15 s | 18 s |
+| Estimated cost per run | $0.004 | ~$0.005 | $0.006 |
 
-That is about 6–13k input tokens and 1–4k output tokens per run. The cost is estimated from token counts and list prices. The whole project, including development, testing and model comparisons, cost about $0.20 in API calls.
+All 5 runs needed one revision (2 rounds): about 10k input and 1–2.5k output tokens per run. A full 3-round run takes about 25 s and $0.01. The cost is estimated from token counts and list prices. The whole project, including development, testing and model comparisons, cost about $0.20 in API calls.
 
 ## Critic calibration
 
