@@ -6,24 +6,22 @@ Native audio (dialogue, sound effects) in 10+ languages. References: 30 images, 
 
 ## Strengths
 - Realistic people: faces, skin, natural body motion, believable performance.
-- Reference control: subject references (1-5 subjects), storyboards, keyframes, video edit and extension.
-- Multi-shot with integer-second timestamps; dialogue with lip sync.
+- Reference control (subjects, storyboards, keyframes), video edit/extension; whole-second timestamps, lip sync.
 
 ## Weaknesses
-- Emotion words about the eyes can produce glowing eyes; style may drift compared with 2.0.
-- Multi-subject scenes swap characters; text is misspelled; unrequested subtitles or BGM may appear.
+- Eye emotion words can give glowing eyes; multi-subject scenes swap characters; text is misspelled.
 
 ## Prompt structure (order)
 1. One-sentence summary: Subject + Location + Event + Genre/Style + Camera movement.
 2. Detailed plot: shot sequence or timeline ("Shot 1 ...", or timestamps).
 3. Additional notes: camera, environment, lighting, sound, atmosphere.
-For a single 5-10 s shot, the summary sentence plus 2-3 short detail sentences is enough.
+Single 5-10 s shot: the summary may be two short sentences (who/where/what, then shot + camera), then details.
 Timestamps: integer seconds, no gaps: "0-3 seconds: ...", "3-7 seconds: ...", or "At the 2-second mark, ...".
 Dialogue: Name says: {line} (exact syntax unverified). Keep actions general, avoid idioms.
 Negatives work only for subtitles and audio: "No subtitles.", "No BGM." Describe visuals positively instead.
 
 ## Ideal length
-No official length. 40-90 words for a single shot works well (unverified).
+No official length. 40-90 words for a single shot (unverified); fast body motion: under 60 words, one camera move.
 
 ## Camera vocabulary
 Shot size: extreme wide, wide, medium, medium close-up, close-up.
@@ -33,7 +31,9 @@ speed ramp, rack focus (explain niche terms in plain words). Tie each camera mov
 Transitions: give time and method ("At the 5-second mark, hard cut to ...").
 
 ## What to avoid
-- More than one main action, or fast repeated motions, in a short clip.
+- More than one main action (a jump with its flip and landing is ONE arc), or fast repeated motions.
+- Stacked effects on fast body motion (handheld shake, flare, grain) and no end state: in the author's test
+  (2.5 flash, 27 Nov 2026) this gave a double flip and artifacts; the plain idea "flips and lands" did not.
 - Eye-focused emotion phrases ("eyes burning with anger"): describe the face and posture instead.
 - Vague praise words (beautiful, epic, cinematic); exact on-screen text.
 - Visual negatives ("no blur", "no distorted hands"): only subtitle and audio negatives are supported.

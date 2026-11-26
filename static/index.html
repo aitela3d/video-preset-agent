@@ -91,9 +91,10 @@
 
 <script>
 const $ = s => document.querySelector(s);
-const LABELS = { one_action: "One action", shot_and_camera: "Shot & camera", concrete_subject: "Concrete subject",
-  lighting_mood: "Lighting & mood", follows_guide: "Follows guide", no_contradictions: "No contradictions",
-  plausible_motion: "Plausible motion" };
+const LABELS = { faithful_to_idea: "Faithful to idea", one_action: "One motion arc",
+  shot_and_camera: "Shot & camera", concrete_subject: "Concrete subject", lighting_mood: "Lighting & mood",
+  follows_guide: "Follows guide", no_contradictions: "No contradictions", plausible_motion: "Plausible motion",
+  simple_and_clear: "Simple & clear" };
 let busy = false, lastIdea = "";
 
 function el(tag, cls, text) {

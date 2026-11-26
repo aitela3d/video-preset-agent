@@ -5,8 +5,7 @@ Hosted API only, weights not published (unverified); the last open-weight flagsh
 2-30 s (default 5 s), 480p-1080p, 30 fps, 21:9 to 9:16. Native audio on by default; up to 20 references.
 
 ## Strengths
-- Low price per second, especially at 480p/720p (exact pricing unverified).
-- Multi-reference transfer, editing, extension; follows an explicit timed shot list closely.
+- Low price per second (exact pricing unverified); multi-reference transfer, editing; follows a timed shot list.
 
 ## Weaknesses
 - Little independent testing of quality yet; hands and limbs can deform in motion.
@@ -23,7 +22,7 @@ Hosted API only, weights not published (unverified); the last open-weight flagsh
 Multi-shot: "Shot 1 [0-3s]: ...", "Shot 2 [3-6s]: ...", no gaps or overlaps, 2-6 s per shot (pages differ).
 
 ## Ideal length
-No official length; max 20,000 characters. 50-100 words for a single shot (unverified).
+No official length; max 20,000 characters. 50-100 words per shot, under 60 for fast body motion (unverified).
 
 ## Camera vocabulary
 Shot size: close-up, medium close-up, medium shot, full shot, wide shot.
@@ -32,9 +31,10 @@ whip pan, FPV. Angles: low, extreme low, overhead. Speed: slow motion, high-spee
 Lens: 24mm wide-angle, 85mm telephoto, shallow or deep focus.
 
 ## What to avoid
-- Fast repeated motions ("shakes head 3 times per second"); more than one main action per shot.
+- Fast repeated motions ("shakes head 3x per second"); more than one main action (jump-flip-land is one).
 - Leaving audio unspecified when you want silence: say "No dialogue." / "No background music."
 - Photoreal human close-ups as the hero shot (quality limit, see below).
+- Stacked effects (handheld shake, flare, grain) on fast motion: more demands, more artifacts (author's test, other models).
 
 ## Example prompts
 1. Generate single shot. A small orange fox with a fluffy tail trots through a snowy birch forest at dawn,

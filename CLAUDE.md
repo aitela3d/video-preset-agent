@@ -16,14 +16,15 @@ Do not use any company name in the repo name, UI or branding.
 
 ## Agent design (keep these names)
 Pattern: routing + evaluator-optimizer loop (Anthropic, "Building effective agents").
-1. Planner: parse the idea into preset fields: subject, action (exactly one main action), shot size, camera motion, environment, lighting, style, duration, aspect ratio.
+1. Planner: parse the idea into preset fields: subject, action (one motion arc from start to end state, with counts; keep every beat of the idea), shot size, camera motion (one simple move), environment, lighting (+ mood), style (one short look), duration, aspect ratio.
 2. Router: choose the target model from guides/ (Seedance / Kling / Wan) with a one-sentence reason. The user can override (Auto or a specific model).
-3. Writer: write the final prompt following the chosen model's guide, plus a reusable template with a {subject} slot (the "one-click preset" version).
-4. Critic: separate call, temperature 0. Sees only the prompt, the guide and the rubric, not the writer's reasoning. Returns JSON: score 1-10 per rubric item, issues (rubric item, problem, concrete fix, breaks a guide rule yes/no). Code computes total (average) and verdict. From round 2 the critic also gets its previous round's issues and answers resolved yes/no for each. Caps enforced by code: a guide-rule violation or an unresolved previous issue = that item at most 6.
+3. Writer: write the final prompt following the chosen model's guide, plus a reusable template with a {subject} slot (the "one-click preset" version). Write simply: plain short sentences, full motion arc first, one camera move, no stacked effects; fast body motion under 60 words.
+4. Critic: separate call, temperature 0. Sees only the user's idea, the prompt, the guide and the rubric, not the writer's reasoning. Code also gives it the word count and the effect terms found. Returns JSON: score 1-10 per rubric item, issues (rubric item, problem, concrete fix, breaks a guide rule yes/no). Code computes total (average) and verdict. From round 2 the critic also gets its previous round's issues and answers resolved yes/no for each. Caps enforced by code: a guide-rule violation or an unresolved previous issue = that item at most 6.
 5. Loop: code decides from the scores. Revise if any item < 7 or average < 8. Max 3 rounds. Stop early if the average did not improve vs the previous round. The final result is the best-scoring version, not the last one.
-6. Critic calibration: tests/critic_calibration.py runs 3 known-bad prompts (vague words; two actions; camera contradiction) and 2 good ones. Bad must score < 7 (on the relevant item or average), good >= 8.
+6. Critic calibration: tests/critic_calibration.py runs 4 known-bad prompts (vague words; two actions; camera contradiction; a real overloaded prompt that failed on a real generation) and 3 good ones. Bad must score < 7 on a target item, good must pass (average >= 8, all items >= 7).
 
-Critic rubric: one clear action per clip; explicit shot size and camera motion; concrete subject (no vague adjectives); lighting and mood stated; follows the model guide (length, syntax, things to avoid); no contradictions; motion physically plausible within the duration.
+Critic rubric: faithful to the idea (no beat dropped); one clear motion arc with start and end state; explicit shot size and one simple camera move; concrete subject (no vague adjectives); lighting and mood stated; follows the model guide (length, syntax, things to avoid); no contradictions; motion physically plausible within the duration; simple and clear (no stacked effects, fewer demands for fast motion).
+Lesson from a real generation test: a 10/10 critic score is not video quality. Scores must be checked against real generations.
 
 ## Model guides (guides/seedance.md, kling.md, wan.md)
 - Use the current model versions available on popular video platforms; check on the web.

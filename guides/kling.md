@@ -5,12 +5,11 @@ Version: Kling 4.0 (global launch Oct 2026) and 4.0 Flash (3-20 s, 720p). Stereo
 
 ## Strengths
 - Scenes, environments, products, vehicles, nature: physics, texture, lighting.
-- Stable large-scale motion and complex camera moves; text stays readable through camera moves.
-- Multi-shot and timed beats; edits keep everything you ask it to preserve.
+- Stable large-scale motion and complex camera moves; multi-shot, timed beats, readable text.
 
 ## Weaknesses
 - Abstract words ("premium look", "vintage feel") are ignored: describe light, materials, composition.
-- Short prompts are auto-expanded with invented story and camera moves: be specific to stay in control.
+- Short prompts get invented story and camera moves: be specific about the action and its end, not about effects.
 - Hands in extreme close-up and day -> night jumps in one clip fail (3.0 sources, unverified for 4.0).
 
 ## Prompt structure (order)
@@ -23,7 +22,7 @@ Dialogue in quotes, with the speaker's tone and speed. Negatives: no separate fi
 only two are needed: "no subtitles", "no background music".
 
 ## Ideal length
-Max 8,000 tokens, but longer is not better. 50-100 words for a single shot (unverified).
+Max 8,000 tokens, but longer is not better. 50-100 words for a single shot, under 60 for fast body motion (unverified).
 
 ## Camera vocabulary
 Shot size: extreme close-up, close-up, medium close-up, full body, wide / establishing.
@@ -31,9 +30,10 @@ Moves: push-in, pull-out, pull back, pan, tilt up, tracking shot, orbit / arc, w
 static / locked camera. Pace: slow, steady, quick. Lens: "24mm wide", "85mm". Never "cinematic movement".
 
 ## What to avoid
-- More than one main action per beat; vague spatial language (causes morphing).
-- Lists of visual negatives ("no blur, no flicker"): describe the wanted result instead.
-- Abstract quality words; restating the start image in image-to-video (identity drift).
+- More than one main action per beat (one arc with its end is fine); vague spatial language (morphing).
+- Visual negative lists and abstract quality words; restating the start image in image-to-video.
+- Stacked effects on fast body motion: in the author's test (4.0 Flash, 27 Nov 2026) a long prompt gave no gain
+  over the plain idea; keep one camera move and state how the action ends.
 
 ## Example prompts
 1. A matte black wireless speaker rests on a wet slate rock beside a mountain stream at dawn; water droplets

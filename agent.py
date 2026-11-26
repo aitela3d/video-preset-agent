@@ -3,12 +3,12 @@
 Pattern: routing + evaluator-optimizer (Anthropic, "Building effective agents").
 Planner -> Router -> Writer -> Critic -> (Writer revises -> Critic) ... -> Final
 """
-import json, os, sys, time, urllib.request, urllib.error
+import json, os, re, sys, time, urllib.request, urllib.error
 from datetime import datetime
 
 # ---- Config -------------------------------------------------------------------------------
-MODEL = "google/gemini-3.1-flash-lite"   # OpenRouter model ID (one place to change it)
-PRICE_IN, PRICE_OUT = 0.25, 1.50          # USD per 1M tokens, for the cost estimate
+MODEL = "google/gemini-3.5-flash-lite"   # OpenRouter model ID (one place to change it)
+PRICE_IN, PRICE_OUT = 0.30, 2.50          # USD per 1M tokens, for the cost estimate
 MAX_ROUNDS = 3                            # max write+critique rounds (enforced by code)
 PASS_SCORE = 8                            # average needed to pass
 MIN_ITEM = 7                              # every rubric item needs at least this
@@ -18,14 +18,27 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 TARGETS = {"seedance": "Seedance 2.5", "kling": "Kling 4.0", "wan": "Wan 3.0"}
 
 RUBRIC = {
-    "one_action": "One clear main action per clip",
-    "shot_and_camera": "Explicit shot size and camera motion",
+    "faithful_to_idea": "Keeps every beat of the user's idea; nothing dropped, nothing added that changes it",
+    "one_action": "One clear motion arc: start and end state stated, counts explicit ('one backflip')",
+    "shot_and_camera": "Explicit shot size and ONE simple camera move",
     "concrete_subject": "Concrete subject, no vague adjectives",
     "lighting_mood": "Lighting and mood stated",
     "follows_guide": "Follows the model guide (structure, length, syntax, things to avoid)",
     "no_contradictions": "No contradictions",
     "plausible_motion": "Motion physically plausible within the duration",
+    "simple_and_clear": "Plain short sentences, no stacked effects; fewer demands when the motion is fast",
 }
+# Effect terms that pile up demands on the model; counted by code and shown to the critic
+EFFECTS = ["handheld", "shake", "flare", "anamorphic", "film grain", "grain", "speed ramp", "bullet time",
+           "dolly zoom", "whip pan", "motion blur", "slow motion", "high shutter", "rack focus", "fisheye"]
+# Repeatable moves need a count; fast body motion needs a short prompt. Both are checked by code.
+MOVES = r"\b\w*(?:flips?|somersaults?|spins?|cartwheels?|twirls?)\b"  # also kickflip, backflip, heelflip
+FAST = (r"\w*flips?\b|\b(ollies?|jumps?|leaps?|sprints?|runs?|running|vaults?|kicks?|dives?|dunks?|punch(es)?|"
+        r"somersaults?|cartwheels?|skates?|skateboard\w*|surf\w*|tackles?|parkour)\b")
+# Empty praise words: every guide says to show these with materials and light instead. Checked by code.
+VAGUE = ["luxury", "luxurious", "premium", "sleek", "elegant", "stunning", "beautiful", "gorgeous", "epic",
+         "cinematic", "breathtaking", "amazing", "masterpiece", "high quality", "high-quality", "ultra detailed",
+         "high-end", "sophisticated", "vibrant", "dramatic"]
 
 
 class AgentError(Exception):
@@ -57,7 +70,7 @@ def load_guide(target):
 def call_llm(system, user, required, temperature=0.7, max_tokens=900, usage=None, reasoning=None):
     body = json.dumps({
         "model": MODEL, "temperature": temperature, "max_tokens": max_tokens,
-        "reasoning": {"effort": reasoning} if reasoning else {"enabled": False},
+        "reasoning": {"effort": reasoning or "minimal"},  # this model cannot turn reasoning off
         "response_format": {"type": "json_object"},
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
     }).encode()
@@ -98,15 +111,18 @@ def planner(idea, usage):
     system = (
         "You are the Planner of a video prompt agent. Parse a one-line video idea into preset fields. "
         "Return JSON with keys: " + ", ".join(PLAN_FIELDS) + ". Rules: subject = concrete and visual "
-        "(who/what, age, materials, colors); action = exactly ONE main action that fits the duration; "
-        "shot_size and camera_motion = specific film terms; fill missing details with sensible choices "
-        "that serve the idea; lighting = light source, direction and color plus the mood "
-        "(e.g. 'soft window light from the left, calm mood'); lighting and style = visible, concrete terms (light direction, color, film look, "
-        "lens), never vague words like cinematic, elegant, epic, high quality; "
+        "(who/what, age, materials, colors); action = ONE motion arc in plain words from start to a clear "
+        "end state, with explicit counts (e.g. 'runs to the edge, jumps the gap, does one backflip, lands "
+        "on both feet'). Keep EVERY beat the idea mentions, add none; if the beats need more time, raise "
+        "the duration instead of dropping them. shot_size = a film term; camera_motion = ONE simple move "
+        "(for fast body motion: locked camera or a steady tracking shot); fill missing details with "
+        "sensible choices that serve the idea; lighting = light source, direction and color plus the mood "
+        "(e.g. 'soft window light from the left, calm mood'); style = ONE short look (e.g. 'realistic, "
+        "natural colors'), no stacked lens or film effects; never vague words like cinematic, epic; "
         "duration = integer seconds (default 5, max 10); "
         "aspect_ratio = '16:9' unless the idea implies vertical (9:16) or square (1:1). All values are strings "
         "except duration.")
-    return call_llm(system, "Idea: " + idea, PLAN_FIELDS, temperature=0.4, max_tokens=500, usage=usage)
+    return call_llm(system, "Idea: " + idea, PLAN_FIELDS, temperature=0.4, max_tokens=800, usage=usage)
 
 
 def router(plan, usage):
@@ -119,40 +135,64 @@ def router(plan, usage):
         "for a cheap or stylized option or quality is not critical. "
         'Return JSON: {"model": "seedance" | "kling" | "wan", "reason": "<one sentence>"}.')
     out = call_llm(system, "Guides:\n" + guides + "\n\nShot plan:\n" + json.dumps(plan, indent=1),
-                   ["model", "reason"], temperature=0, max_tokens=200, usage=usage)
+                   ["model", "reason"], temperature=0, max_tokens=400, usage=usage)
     if out["model"] not in TARGETS:
         raise AgentError("Router returned unknown model: %s" % out["model"])
     return out
 
 
-def writer(plan, target, usage, previous=None, issues=None, keep_fixed=()):
+def writer(idea, plan, target, usage, previous=None, issues=None, keep_fixed=()):
     system = (
-        "You are the Writer of a video prompt agent. Write the final text-to-video prompt for %s, strictly "
-        "following the model guide below (structure order, ideal length, camera vocabulary, things to avoid). "
-        "Keep exactly one main action, explicit shot size and camera motion, a concrete subject, lighting and "
-        "mood. Do not mention the model name, duration or aspect ratio unless the guide's syntax needs it. "
+        "You are the Writer of a video prompt agent. Write the final text-to-video prompt for %s, following "
+        "the model guide below (structure order, ideal length, camera vocabulary, things to avoid). "
+        "Write simply, like directions to a camera crew: plain words, short sentences. Start with who does "
+        "what: the full motion from start to a visible ending, with counts ('does one backflip and lands on both "
+        "feet'); describe the ending itself, never write the words 'end state'. Every beat of the user's idea must be in the prompt, and add no new beats (no extra run-up, roll, turn or "
+        "pose). Then where, ONE simple camera move with "
+        "the shot size, light and a mood word, then only the lines the guide requires. Add no effects "
+        "(handheld shake, lens flare, film grain, speed ramp, slow motion) unless the idea asks for them; at "
+        "most one style term. Fast or complex body motion: under 60 words and a locked or steady tracking "
+        "camera, because every extra demand raises the risk of artifacts. Never use praise words (luxury, "
+        "premium, sleek, elegant, stunning, cinematic, vibrant, dramatic): show them with materials, shapes "
+        "and light instead (a luxury watch -> a polished steel watch with a sapphire crystal). "
+        "Do not mention the model name, duration or aspect ratio unless the guide's syntax needs it. "
         "Also write a reusable template: the same prompt with the main subject's whole noun phrase (including "
-        "its article, e.g. 'A barista in a dark apron') replaced by the slot {subject}; replace later mentions "
-        "with neutral words ('the subject', 'it'), so the template works for any subject. "
-        'Return JSON: {"prompt": "...", "template": "..."}.\n\nMODEL GUIDE:\n%s'
+        "its article, e.g. 'A barista in a dark apron') replaced by the slot {subject}; later mentions become "
+        "'they/their' for people or animals and 'it/its' for things. The template must read naturally when "
+        "{subject} is a similar noun phrase ('a skateboarder', 'a red sports car', 'thick sea mist'). Also "
+        "return subject_phrase: the main subject's noun phrase exactly as written in the prompt. "
+        'Return JSON: {"prompt": "...", "template": "...", "subject_phrase": "..."}.\n\nMODEL GUIDE:\n%s'
     ) % (TARGETS[target], load_guide(target))
-    user = "Shot plan:\n" + json.dumps(plan, indent=1)
+    user = "User's idea: " + idea + "\n\nShot plan:\n" + json.dumps(plan, indent=1)
     if previous:
         user += ("\n\nYour previous prompt:\n" + previous + "\n\nThe critic found these problems. Fix EVERY one "
                  "(simplify the shot plan if needed), keep what already works, and never drop the lighting "
-                 "or the mood word. If a fix conflicts with the shot plan, the fix wins:\n" +
+                 "or the mood word. If a fix conflicts with the shot plan, the fix wins, but never drop a beat of the "
+                 "user's idea (make it simpler instead):\n" +
                  "\n".join("- %s -> FIX: %s" % (i["problem"], i["fix"]) for i in issues))
         if keep_fixed:
             user += "\n\nAlready fixed earlier, do NOT bring these back:\n" + "\n".join("- " + p for p in keep_fixed)
-    out = call_llm(system, user, ["prompt", "template"], temperature=0.7, max_tokens=900, usage=usage)
-    if "{subject}" not in out["template"]:
-        out["template"] = out["prompt"].replace(plan["subject"], "{subject}", 1)
+    out = call_llm(system, user, ["prompt", "template", "subject_phrase"], temperature=0.7, max_tokens=1200,
+                   usage=usage)
+    if "{subject}" not in str(out["template"]):  # code fallback: put the slot where the subject phrase is
+        phrase = str(out["subject_phrase"]).strip()
+        hit = re.search(re.escape(phrase), out["prompt"], flags=re.I) if len(phrase) > 2 else None
+        out["template"] = (out["prompt"][:hit.start()] + "{subject}" + out["prompt"][hit.end():] if hit
+                           else "{subject}: " + out["prompt"])
+    t = re.sub(r"\{(?!subject\})(\w+)\}", r"\1", out["template"])  # only one kind of slot: {subject}
+    phrase = str(out["subject_phrase"]).strip()
+    if len(phrase) > 2:  # a subject mention the writer left in the template becomes the slot too
+        t = re.sub(re.escape(phrase), "{subject}", t, flags=re.I)
+    out["template"] = re.sub(r"\b(?:its|it)/(their|they)\b|\b(their|they)/(?:its|it)\b",
+                             lambda m: m.group(1) or m.group(2), t)
+    # {subject} carries its own article ("a skateboarder"), so drop any article written before the slot
+    out["template"] = re.sub(r"\b(the|a|an)\s+\{subject\}", "{subject}", out["template"], flags=re.I)
     return out
 
 
-def critic(prompt, plan, target, usage, previous_issues=()):
-    """Separate call, temperature 0. Sees only the prompt (+ duration/aspect), the guide, the rubric
-    and, from round 2, its own issue list from the previous round. Never sees the writer's reasoning."""
+def critic(prompt, idea, plan, target, usage, previous_issues=()):
+    """Separate call, temperature 0. Sees only the user's idea, the prompt (+ duration/aspect), the guide,
+    the rubric and, from round 2, its own earlier issues. Never sees the writer's reasoning."""
     rubric = "\n".join("- %s: %s" % kv for kv in RUBRIC.items())
     system = (
         "You are a strict Critic of text-to-video prompts for %s. Score the prompt 1-10 on each rubric item. "
@@ -162,12 +202,19 @@ def critic(prompt, plan, target, usage, previous_issues=()):
         "word count vs the guide's ideal length, structure order, vague words (cinematic, beautiful, "
         "high-definition, stunning, epic...), things the guide says to avoid, the weaknesses listed in THIS "
         "guide (only those; a strength of the model is never a risk), whether the action and camera move fit "
-        "the duration. "
+        "the duration. Faithfulness: list every action verb of the user's idea and check each one is in the "
+        "prompt with the same meaning (smiling is not laughing, holding is not reading); a lost or weakened "
+        "action is a real problem (<= 6). The motion has a stated end state and counts, otherwise the model invents the rest (double "
+        "flips, teleporting). Simplicity: more demands = more artifacts, so stacked effects (handheld shake, "
+        "lens flare, film grain...) or long camera instructions on fast body motion are a real risk (<= 6). "
         "Vague words = empty praise/quality words with no visible meaning (cinematic, beautiful, stunning, "
         "premium, high quality, masterpiece). Mood words (calm, tense, quiet, reflective) are REQUIRED by the "
-        "rubric and are not vague. One action = one main movement; a simultaneous facial expression, breathing "
-        "or ambient motion (steam, hair in the wind) is NOT a second action, but sequential actions are "
-        "('then', 'and finally'). Be honest, not generous; list only real problems (never one you call "
+        "rubric and are not vague. One action = one motion arc: a movement with its natural start and end "
+        "(takes off, does one flip, lands) is ONE action, and stating the end is GOOD, never a risk. A "
+        "simultaneous expression or ambient motion (steam, hair in the wind) is not a second action; separate "
+        "activities in a row are ('runs, then buys flowers, then opens an umbrella'). A fast-motion prompt "
+        "under 60 words meets the length rule. "
+        "Be honest, not generous; list only real problems (never one you call "
         "acceptable); if nothing is wrong, return no issues.\n"
         "RUBRIC:\n%s\n\nMODEL GUIDE:\n%s\n\n"
         'Return JSON in this key order: {"previous": [{"id": <n>, "resolved": "yes" | "no"}] (one entry per '
@@ -176,8 +223,10 @@ def critic(prompt, plan, target, usage, previous_issues=()):
         'problems; guide_rule only if the prompt violates a rule written in the guide), '
         '"scores": {<rubric key>: int}}.'
     ) % (TARGETS[target], rubric, load_guide(target))
-    user = "Clip duration: %ss. Aspect ratio: %s. Word count (counted by code): %d.\nPROMPT:\n%s" % (
-        plan["duration"], plan["aspect_ratio"], len(prompt.split()), prompt)
+    effects = [e for e in EFFECTS if e in prompt.lower() and not (e == "grain" and "film grain" in prompt.lower())]
+    user = ("USER'S IDEA: %s\nClip duration: %ss. Aspect ratio: %s. Word count (counted by code): %d. "
+            "Effect terms (found by code): %s.\nPROMPT:\n%s") % (
+        idea, plan["duration"], plan["aspect_ratio"], len(prompt.split()), ", ".join(effects) or "none", prompt)
     if previous_issues:
         user += ("\n\nIssues you found in EARLIER versions. For each, check the new prompt: is it really "
                  "resolved (the problem is gone, not just reworded, and has not come back)?\n" +
@@ -203,6 +252,27 @@ def critic(prompt, plan, target, usage, previous_issues=()):
         resolved.append({"problem": old["problem"], "item": old["item"], "resolved": ok})
         if not ok:
             scores[old["item"]] = min(scores[old["item"]], 6)
+    vague = [w for w in VAGUE if re.search(r"\b%s\b" % re.escape(w), prompt.lower())]
+    if vague:  # deterministic check, like the word count: praise words cap concrete_subject at 6
+        issues.append({"item": "concrete_subject", "problem": "Vague praise words (found by code): " +
+                       ", ".join(vague), "fix": "Replace them with visible materials, shapes and light.",
+                       "breaks_guide_rule": True})
+        scores["concrete_subject"] = min(scores["concrete_subject"], 6)
+    low = prompt.lower()  # repeatable moves need a count ("one backflip"), or the model may repeat them
+    uncounted = [m.group() for m in re.finditer(MOVES, low)
+                 if not re.search(r"\b(one|single|two|three|double|triple)\b", low[max(0, m.start() - 25):m.start()])
+                 and not re.search(r"\b(once|twice)\b", low[m.end():m.end() + 10])]
+    if uncounted:
+        issues.append({"item": "one_action", "problem": "Move without a count (found by code): " +
+                       ", ".join(uncounted), "fix": "Say how many, e.g. 'does one backflip and lands'.",
+                       "breaks_guide_rule": True})
+        scores["one_action"] = min(scores["one_action"], 6)
+    words = len(prompt.split())  # fast body motion needs a short prompt (guides: under 60 words)
+    if words > 60 and re.search(FAST, low):
+        issues.append({"item": "simple_and_clear", "problem": "Fast body motion in %d words (found by code; "
+                       "limit 60)" % words, "fix": "Cut to under 60 words: keep the action, one camera "
+                       "move, light and mood, the required lines.", "breaks_guide_rule": True})
+        scores["simple_and_clear"] = min(scores["simple_and_clear"], 6)
     total = round(sum(scores.values()) / len(scores), 1)  # computed in code, not trusted from LLM
     verdict = "pass" if total >= PASS_SCORE and min(scores.values()) >= MIN_ITEM else "revise"
     return {"scores": scores, "total": total, "issues": issues, "resolved": resolved, "verdict": verdict}
@@ -229,11 +299,11 @@ def run_agent(idea, choice="auto", emit=lambda step, data: None):
     step("router", {"model": target, "name": TARGETS[target], "reason": route["reason"]})
 
     # Evaluator-optimizer loop. Code decides from the scores; the best version wins, not the last one.
-    draft = writer(plan, target, usage)
+    draft = writer(idea, plan, target, usage)
     step("writer", {"round": 1, "prompt": draft["prompt"]})
     history, previous_issues = [], []
     for rnd in range(1, MAX_ROUNDS + 1):
-        review = critic(draft["prompt"], plan, target, usage, previous_issues)
+        review = critic(draft["prompt"], idea, plan, target, usage, previous_issues)
         history.append((review["total"], rnd, draft, review["verdict"] == "pass"))
         step("critic", dict(review, round=rnd))
         if review["verdict"] == "pass":
@@ -250,7 +320,7 @@ def run_agent(idea, choice="auto", emit=lambda step, data: None):
         todo = review["issues"] + [dict(r, fix="Still unresolved: really fix it.") for r in unresolved]
         previous_issues = previous_issues + review["issues"]
         fixed = [r["problem"] for r in review["resolved"] if r["resolved"]]
-        draft = writer(plan, target, usage, previous=draft["prompt"], issues=todo, keep_fixed=fixed)
+        draft = writer(idea, plan, target, usage, previous=draft["prompt"], issues=todo, keep_fixed=fixed)
         step("revise", {"round": rnd + 1, "fixes": [i["fix"] for i in todo], "prompt": draft["prompt"]})
 
     best_total, best_round, best, best_passed = max(history, key=lambda h: (h[0], -h[1]))  # tie -> earlier
