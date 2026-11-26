@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Preset Agent</title>
+<style>
+  :root { --bg:#0e1014; --card:#171a21; --line:#272b35; --text:#e9ebf1; --muted:#9aa1b1;
+          --accent:#8ea8ff; --good:#5fd39a; --warn:#ffb85c; --bad:#ff7b7b; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:18px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:32px 24px 80px; }
+  h1 { font-size:34px; margin:0 0 6px; }
+  .lead { color:var(--muted); margin:0 0 6px; font-size:19px; }
+  .flow { color:var(--accent); font-weight:600; margin:0 0 24px; }
+  .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  input, select, button { font:inherit; color:var(--text); background:var(--card); border:1px solid var(--line);
+          border-radius:10px; padding:12px 14px; }
+  input#idea { flex:1; min-width:300px; font-size:20px; }
+  button { background:var(--accent); color:#0e1014; font-weight:700; border:none; cursor:pointer; padding:12px 22px; }
+  button.ghost { background:transparent; color:var(--text); border:1px solid var(--line); font-weight:500; }
+  button:disabled { opacity:.45; cursor:default; }
+  .examples { margin:10px 0 0; color:var(--muted); font-size:15px; }
+  .examples a { color:var(--accent); cursor:pointer; margin-right:14px; text-decoration:none; }
+  .replay { margin-top:14px; font-size:16px; color:var(--muted); }
+  .replay select { font-size:16px; max-width:560px; }
+  #status { margin:18px 0 0; color:var(--muted); min-height:27px; }
+  #status.err { color:var(--bad); }
+  #timeline { margin-top:18px; display:flex; flex-direction:column; gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 20px;
+          animation:in .35s ease; }
+  @keyframes in { from { opacity:0; transform:translateY(8px); } }
+  .card-h { display:flex; gap:12px; align-items:baseline; margin-bottom:10px; }
+  .step { font-weight:800; font-size:20px; color:var(--accent); }
+  .sub { color:var(--muted); font-size:15px; }
+  .time { margin-left:auto; color:var(--muted); font-size:14px; }
+  .fields { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:8px 18px; }
+  .field b { display:block; color:var(--muted); font-weight:500; font-size:13px; text-transform:uppercase; letter-spacing:.05em; }
+  .big { font-size:26px; font-weight:800; }
+  .muted { color:var(--muted); margin:4px 0 0; }
+  .prompt { background:#0f1218; border:1px solid var(--line); border-radius:10px; padding:14px 16px; white-space:pre-wrap; }
+  .label { color:var(--muted); font-size:14px; text-transform:uppercase; letter-spacing:.05em; margin:6px 0 4px; }
+  ul { margin:4px 0 10px; padding-left:22px; }
+  .score { font-size:40px; font-weight:800; line-height:1; }
+  .badge { display:inline-block; border-radius:999px; padding:3px 12px; font-size:14px; font-weight:700; margin-left:10px; vertical-align:middle; }
+  .pass { background:rgba(95,211,154,.15); color:var(--good); } .revise { background:rgba(255,123,123,.15); color:var(--bad); }
+  .bars { display:grid; grid-template-columns:190px 1fr 32px; gap:6px 12px; align-items:center; margin:14px 0 8px; font-size:16px; }
+  .bar { height:10px; background:#0f1218; border-radius:6px; overflow:hidden; }
+  .bar i { display:block; height:100%; background:var(--good); } .bar i.low { background:var(--bad); }
+  .tag { font-size:12px; border:1px solid var(--line); border-radius:6px; padding:1px 6px; margin-right:6px; color:var(--muted); }
+  .tag.rule { color:var(--warn); border-color:var(--warn); }
+  .ok { color:var(--good); } .no { color:var(--bad); }
+  .final { border-color:var(--accent); }
+  .stats { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:12px; margin-bottom:16px; }
+  .stat b { display:block; color:var(--muted); font-size:13px; font-weight:500; text-transform:uppercase; letter-spacing:.05em; }
+  .stat span { font-size:22px; font-weight:700; }
+  .copyrow { display:flex; justify-content:space-between; align-items:center; margin-top:14px; }
+  .copyrow button { padding:6px 14px; font-size:15px; }
+  .compare { display:grid; grid-template-columns:1fr 2fr; gap:14px; }
+  .compare .prompt { height:100%; }
+  @media (max-width:760px) { .compare { grid-template-columns:1fr; } .bars { grid-template-columns:130px 1fr 28px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Video Preset Agent</h1>
+  <p class="lead">Type a one-line video idea. The agent turns it into a ready-to-use prompt for the best-fitting video
+    model, then a separate critic scores it and forces rewrites until it is good.</p>
+  <p class="flow">Planner → Router → Writer → Critic ⟲ Revise → Final preset</p>
+
+  <div class="row">
+    <input id="idea" placeholder="e.g. an old fisherman mends a net on a pier at sunrise" maxlength="300">
+    <select id="model" title="Target video model">
+      <option value="auto">Auto (router decides)</option>
+      <option value="seedance">Seedance 2.5</option>
+      <option value="kling">Kling 3.0</option>
+      <option value="wan">Wan 2.2</option>
+    </select>
+    <button id="run">Run</button>
+  </div>
+  <div class="examples">Try:
+    <a>a chef flips a pancake in a sunlit kitchen</a><a>a red sneaker rotating on a white pedestal</a><a>fog rolling over a pine forest at dawn</a>
+  </div>
+  <div class="row replay">Replay a saved run (no API call):
+    <select id="runs"></select><button class="ghost" id="play">▶ Replay</button>
+  </div>
+
+  <div id="status"></div>
+  <div id="timeline"></div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const LABELS = { one_action: "One action", shot_and_camera: "Shot & camera", concrete_subject: "Concrete subject",
+  lighting_mood: "Lighting & mood", follows_guide: "Follows guide", no_contradictions: "No contradictions",
+  plausible_motion: "Plausible motion" };
+let busy = false, lastIdea = "";
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+function status(text, err) { $("#status").textContent = text; $("#status").className = err ? "err" : ""; }
+function setBusy(b) { busy = b; ["#run", "#play"].forEach(s => $(s).disabled = b); }
+
+function card(title, sub, t, cls) {
+  const c = el("div", "card " + (cls || "")), h = el("div", "card-h");
+  h.append(el("span", "step", title));
+  if (sub) h.append(el("span", "sub", sub));
+  if (t != null) h.append(el("span", "time", t + " s"));
+  c.append(h);
+  $("#timeline").append(c);
+  c.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  return c;
+}
+function list(items, render) { const u = el("ul"); items.forEach(i => u.append(render(i))); return u; }
+function copyBlock(parent, label, text) {
+  const row = el("div", "copyrow"), btn = el("button", "ghost", "Copy");
+  row.append(el("div", "label", label), btn);
+  btn.onclick = () => navigator.clipboard.writeText(text).then(() => { btn.textContent = "Copied ✓";
+    setTimeout(() => btn.textContent = "Copy", 1500); });
+  parent.append(row, el("div", "prompt", text));
+}
+
+function render(d) {
+  if (d.step === "planner") {
+    const c = card("Planner", "idea → preset fields", d.t), g = el("div", "fields");
+    for (const [k, v] of Object.entries(d.plan)) {
+      const f = el("div", "field");
+      f.append(el("b", null, k.replace("_", " ")), el("span", null, k === "duration" ? v + " s" : String(v)));
+      g.append(f);
+    }
+    c.append(g);
+  } else if (d.step === "router") {
+    const c = card("Router", "chooses the target video model", d.t);
+    c.append(el("div", "big", d.name), el("p", "muted", d.reason));
+  } else if (d.step === "writer" || d.step === "revise") {
+    const c = card(d.step === "writer" ? "Writer" : "Revise", "round " + d.round + " prompt", d.t);
+    if (d.fixes && d.fixes.length) c.append(el("div", "label", "Applying critic fixes"), list(d.fixes, f => el("li", null, f)));
+    c.append(el("div", "prompt", d.prompt));
+  } else if (d.step === "critic") {
+    const c = card("Critic", "round " + d.round + " · separate model call, temperature 0", d.t);
+    const s = el("div"); s.append(el("span", "score", d.total.toFixed(1) + " / 10"),
+      el("span", "badge " + d.verdict, d.verdict === "pass" ? "PASS" : "REVISE"));
+    c.append(s);
+    const bars = el("div", "bars");
+    for (const [k, v] of Object.entries(d.scores)) {
+      const bar = el("div", "bar"), fill = el("i", v < 7 ? "low" : "");
+      fill.style.width = v * 10 + "%"; bar.append(fill);
+      bars.append(el("span", null, LABELS[k] || k), bar, el("b", v < 7 ? "no" : "", v));
+    }
+    c.append(bars);
+    if (d.resolved && d.resolved.length) {
+      c.append(el("div", "label", "Earlier issues: fixed?"));
+      c.append(list(d.resolved, r => { const li = el("li");
+        li.append(el("b", r.resolved ? "ok" : "no", r.resolved ? "✓ resolved  " : "✗ not resolved  "), r.problem); return li; }));
+    }
+    if (d.issues.length) {
+      c.append(el("div", "label", "Issues found"));
+      c.append(list(d.issues, i => { const li = el("li");
+        li.append(el("span", "tag", LABELS[i.item] || i.item));
+        if (i.breaks_guide_rule) li.append(el("span", "tag rule", "breaks guide rule → max 6"));
+        li.append(i.problem); return li; }));
+    } else c.append(el("p", "muted", "No issues found."));
+  } else if (d.step === "final") renderFinal(d);
+}
+
+function renderFinal(d) {
+  const c = card("Final preset", d.passed ? "passed the critic" : "best version (did not fully pass)", d.t, "final");
+  const stats = el("div", "stats");
+  [["Target model", d.name], ["Score", d.first_score.toFixed(1) + " → " + d.final_score.toFixed(1)],
+   ["Rounds", d.rounds + " (best: " + d.best_round + ")"], ["Time", d.seconds + " s"],
+   ["Est. cost", "$" + d.cost_usd.toFixed(4)]].forEach(([k, v]) => {
+    const s = el("div", "stat"); s.append(el("b", null, k), el("span", null, v)); stats.append(s); });
+  c.append(stats, el("p", "muted", "Loop: " + d.stop + ". LLM: " + d.llm));
+  copyBlock(c, "Final prompt", d.prompt);
+  copyBlock(c, "Reusable template ({subject} slot)", d.template);
+  const cmp = card("Raw idea vs final prompt", null, null), grid = el("div", "compare"), a = el("div"), b = el("div");
+  a.append(el("div", "label", "Raw idea"), el("div", "prompt", d.idea));
+  b.append(el("div", "label", "Final prompt for " + d.name), el("div", "prompt", d.prompt));
+  grid.append(a, b); cmp.append(grid);
+}
+
+function run() {
+  const idea = $("#idea").value.trim();
+  if (!idea || busy) return status(idea ? "" : "Type an idea first.", !idea);
+  setBusy(true); $("#timeline").innerHTML = ""; status("Running… (about 10–25 s)");
+  const es = new EventSource("/api/run?model=" + $("#model").value + "&idea=" + encodeURIComponent(idea));
+  const done = (msg, err) => { es.close(); setBusy(false); status(msg, err); };
+  es.addEventListener("step", e => render(JSON.parse(e.data)));
+  es.addEventListener("saved", e => { done("Done. Saved as runs/" + JSON.parse(e.data).file); loadRuns(); });
+  es.addEventListener("error", e => { if (e.data) done("Error: " + JSON.parse(e.data).message, true); });
+  es.onerror = () => { if (busy) done("Connection to the server was lost.", true); };
+}
+
+async function loadRuns() {
+  const runs = await (await fetch("/api/runs")).json(), sel = $("#runs");
+  sel.innerHTML = "";
+  if (!runs.length) sel.append(el("option", null, "no saved runs yet"));
+  runs.forEach(r => { const o = el("option", null, r.idea + " — " + r.name + " (" + r.first + " → " + r.final + ")");
+    o.value = r.file; sel.append(o); });
+}
+
+async function replay() {
+  const file = $("#runs").value;
+  if (!file || !file.endsWith(".json") || busy) return;
+  setBusy(true); $("#timeline").innerHTML = ""; status("Replaying saved run " + file + " (no API call)…");
+  const saved = await (await fetch("/api/runs/" + file)).json();
+  $("#idea").value = saved.idea;
+  for (const ev of saved.events) { await new Promise(r => setTimeout(r, 900)); render({ step: ev.step, ...ev.data }); }
+  setBusy(false); status("Replay finished.");
+}
+
+$("#run").onclick = run;
+$("#play").onclick = replay;
+$("#idea").addEventListener("keydown", e => { if (e.key === "Enter") run(); });
+document.querySelectorAll(".examples a").forEach(a => a.onclick = () => { $("#idea").value = a.textContent; $("#idea").focus(); });
+loadRuns();
+</script>
+</body>
+</html>
