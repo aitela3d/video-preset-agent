@@ -48,7 +48,7 @@ Transitions: give time and method ("At the 5-second mark, hard cut to ...").
    camera slowly orbits left. Golden low sun, sea mist, calm mood. Sound: gulls, creaking wood. No subtitles.
 
 ## From my testing
-- Seedance: best for realistic people.
+- Seedance 2.5: good for realistic people, on par with Kling 4.0 and Wan 3.0 prime (Nov 2026); 2.5 flash is a bit weaker.
 - My consistency approach: background first, then the character on that background, then video.
 
 ## What changed vs the previous guide

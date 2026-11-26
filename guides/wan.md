@@ -33,7 +33,6 @@ Lens: 24mm wide-angle, 85mm telephoto, shallow or deep focus.
 ## What to avoid
 - Fast repeated motions ("shakes head 3x per second"); more than one main action (jump-flip-land is one).
 - Leaving audio unspecified when you want silence: say "No dialogue." / "No background music."
-- Photoreal human close-ups as the hero shot (quality limit, see below).
 - Stacked effects (handheld shake, flare, grain) on fast motion: more demands, more artifacts (author's test, other models).
 
 ## Example prompts
@@ -46,7 +45,8 @@ Lens: 24mm wide-angle, 85mm telephoto, shallow or deep focus.
    Sound: soft slurp, quiet kitchen hum. No dialogue. Style: realistic food photography, cozy late-night mood.
 
 ## From my testing
-- Wan: cheap option, weaker quality. (Wan 3.0 is API-only; open weights end at Wan 2.2.)
+- Wan 3.0 prime: as good as Seedance and Kling for people, usually the cheapest; lighter versions are a bit weaker.
+  (Wan 3.0 is API-only; open weights end at Wan 2.2.)
 - My consistency approach: background first, then the character on that background, then video.
 
 ## What changed vs Wan 2.2

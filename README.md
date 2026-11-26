@@ -26,7 +26,7 @@ flowchart LR
 | Step | What it does |
 |---|---|
 | **Planner** | Parses the idea into fields: subject, one motion arc from start to end with counts ("jumps, does one flip, lands"), shot size, one simple camera move, environment, lighting + mood, one short style, duration, aspect ratio. Every beat of the idea is kept. |
-| **Router** | Picks the target model from `guides/` and gives a one-sentence reason. "From my testing" rules come first: people go to Seedance; scenes without people in close-up go to Kling; Wan is the cheap option. You can override it in the UI. |
+| **Router** | Picks the target model from `guides/` and explains the choice in one sentence. My tests show quality is close across the three, so it decides by what the idea needs: readable text, 4K or 21:9 go to Kling; spoken dialogue with lip sync goes to Seedance; "cheap" goes to Wan. If nothing decides, the default is Seedance for people and Kling for scenes, and the router says it used the default. You can override it in the UI. |
 | **Writer** | Writes the prompt following the chosen model's guide, plus a template with a `{subject}` slot. It writes plainly: the full action first, one camera move, no stacked effects, no praise words, and under 60 words for fast body motion. |
 | **Critic** | A separate call at temperature 0. It sees only the user's idea, the prompt, the guide and the rubric, never the writer's reasoning. It scores 9 rubric items from 1 to 10 and lists issues with fixes. From round 2 on, it also gets every issue it found earlier and answers *resolved: yes/no* for each one. |
 | **Checks in code** | Deterministic checks that do not depend on the LLM: word count, vague praise words, a repeatable move without a count ("flips" instead of "one flip"), and fast body motion above 60 words. Each one caps its rubric item at 6. |
@@ -52,17 +52,17 @@ python3 app.py                                 # then open http://localhost:8000
 
 **Raw idea:** `a parkour runner jumps between rooftops at sunset, flips and lands`
 
-**Planner action:** runs to the edge of a concrete rooftop, jumps the gap, does **one** front flip, **lands** firmly on both feet.
+**Planner action:** runs across a rooftop edge, leaps the gap, performs **one** mid-air front flip, **lands** in a deep squat on both feet.
 
-**Router:** Seedance 2.5, because a person's body motion is the subject.
+**Router:** Seedance 2.5. "The idea features a person performing fast body motion as the subject, so the default model for people applies."
 
-**Round 1, critic 8.7 (REVISE):** 84 words for fast body motion (a code check caps *simple & clear* at 6), and the praise word "dramatic" (another code check caps *concrete subject* at 6).
+**Round 1, critic 8.7 (REVISE):** 70 words for fast body motion (a code check caps *simple & clear* at 6), the praise word "vibrant" (another code check caps *concrete subject* at 6), and a tracking shot on fast motion.
 
-**Round 2, critic 10.0 (PASS):** 59 words.
+**Round 2, critic 10.0 (PASS):** 56 words, locked-off camera.
 
-> A parkour runner wearing dark clothing and red sneakers runs to the edge of a concrete rooftop, jumps the gap, does one front flip, and lands firmly on both feet on the opposite roof. Medium wide shot, steady tracking camera. Urban city rooftops at sunset. Low sun casting long hard shadows, glowing orange sky, energetic mood. Realistic, natural colors.
+> A parkour runner in a black t-shirt and cargo pants runs across a concrete rooftop edge, leaps across to the adjacent building, does one mid-air front flip, and lands in a deep squat. Medium wide shot, locked-off camera. Low golden sun casting long shadows against a deep orange and purple sky, energetic mood. Realistic natural colors.
 
-**Template:** `{subject} runs to the edge of a concrete rooftop, jumps the gap, does one front flip, and lands firmly on both feet …`
+**Template:** `{subject} runs across a concrete rooftop edge, leaps across to the adjacent building, does one mid-air front flip …`
 
 ## Cost and latency
 
@@ -70,10 +70,24 @@ From the 5 saved demo runs (person close-up, product, landscape, action, food):
 
 | | min | typical | max |
 |---|---|---|---|
-| Time per run | 6.5 s | ~9 s | 10 s |
-| Estimated cost per run | $0.0035 | ~$0.006 | $0.006 |
+| Time per run | 5.7 s | ~9 s | 12 s (3 rounds) |
+| Estimated cost per run | $0.0037 | ~$0.006 | $0.009 |
 
-Four of the five runs needed one revision; the food shot passed on the first try. A run uses about 8–12k input tokens and 0.5–1k output tokens. A full 3-round run takes about 15 s and $0.009. Cost is estimated from token counts and list prices. The whole project, including development, testing, model comparisons and several re-recordings of the demos, cost about $0.82 in API calls.
+The food shot passed on the first try, three runs needed one revision, and the person close-up needed two. A run uses about 8–16k input tokens and 0.5–1.7k output tokens. Cost is estimated from token counts and list prices. The whole project, including development, testing, model comparisons and several re-recordings of the demos, cost about $0.92 in API calls.
+
+## When does the agent actually help?
+
+Honest finding from my own generations (Nov 2026): Seedance 2.5, Kling 4.0 and Wan 3.0 prime all produced good videos of people and scenes. Results were good both from the agent's prompts and from the plain one-line idea. Only the cheaper flash versions were a bit weaker. **For a simple single shot on a strong 2026 model, a plain idea is often enough.**
+
+Where the agent should still earn its place (not yet measured):
+- **Exact control:** counts and endings ("one flip, lands on both feet"), one camera move, nothing the model has to invent.
+- **Series:** the `{subject}` template keeps one look across many clips.
+- **Cheaper flash models:** they are more sensitive to overloaded prompts.
+- **Model syntax:** dialogue lines, audio on/off, timestamps, "one continuous shot" and similar details differ per model.
+
+The next real test is a set of harder briefs, comparing the raw idea with the agent's prompt on each model. If the agent does not win there either, that is the answer.
+
+
 
 ## Critic calibration
 
@@ -81,10 +95,10 @@ Four of the five runs needed one revision; the food shot passed on the first try
 
 | Case | Model | Item that must fail | Score | Average | Result |
 |---|---|---|---|---|---|
-| bad: vague words | Kling | concrete subject | 3 | 5.8 | OK |
-| bad: two actions | Seedance | one action | 4 | 7.4 | OK |
-| bad: camera contradiction | Kling | shot & camera | 6 | 8.0 | OK |
-| bad: overloaded action (real) | Seedance | simple & clear | 6 | 7.8 | OK |
+| bad: vague words | Kling | concrete subject | 3 | 5.9 | OK |
+| bad: two actions | Seedance | one action | 4 | 8.3 | OK |
+| bad: camera contradiction | Kling | shot & camera | 5 | 7.6 | OK |
+| bad: overloaded action (real) | Seedance | simple & clear | 6 | 8.1 | OK |
 | good: person close-up | Seedance | all ≥ 7 | min 10 | 10.0 | OK |
 | good: product shot | Kling | all ≥ 7 | min 10 | 10.0 | OK |
 | good: simple action | Seedance | all ≥ 7 | min 10 | 10.0 | OK |
@@ -116,10 +130,12 @@ The first critic was far too generous: it gave **10/10** to a prompt containing 
 
    The lesson: **critic scores must be checked against real generations.**
 9. **A stronger, cheaper judge mattered once the test got harder.** On the first calibration set, swapping models made no difference. On the harder set, the old model kept penalising a correct "jump, one flip, land" as "too many actions", even while quoting the rule that says it is one arc. Gemini 3.5 Flash Lite passed every repeated check.
+10. **The models caught up, so routing had to change.** My first routing rules ("Seedance for people", "Wan is weaker") came from earlier tests. New tests showed Kling 4.0 and Wan 3.0 prime are as good with people. The router now picks by what the idea needs (text, 4K, dialogue, price) and says plainly when it falls back to a default. Agent design has to follow the models, not the other way round.
 
 ## Limitations
 
 - **LLM-as-judge bias.** The writer and critic are the same model family, so the critic may share the writer's blind spots and favour its style. Scores are noisy near the thresholds.
+- **The agent's value is not proven.** On strong models a plain idea often worked as well, and I have no measured win for the agent yet (see "When does the agent actually help?").
 - **Scores are not ground truth.** A 10/10 means the prompt follows the rubric and guide, not that the video will look good. One real test (above) showed a 10/10 prompt losing to the raw idea. The rules added after it are based on a single test, so they are marked unverified in the guides.
 - **The critic still misses things.** It can let a small change of meaning through, for example "reads a letter" becoming "holds a letter". The code checks catch only the patterns they were written for.
 - **Guides go stale.** Video models change every few months. The guides in `guides/` were researched in November 2026, and anything uncertain is marked "unverified".

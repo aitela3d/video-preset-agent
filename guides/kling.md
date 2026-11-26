@@ -45,7 +45,7 @@ static / locked camera. Pace: slow, steady, quick. Lens: "24mm wide", "85mm". Ne
    wheel level, dust trailing behind. Warm low sun, long shadows, quiet open mood. No subtitles.
 
 ## From my testing
-- Kling: best for scenes without people in close-up.
+- Kling 4.0: as good as Seedance for people, also strong for scenes, products and nature; 4.0 Flash is a bit weaker.
 - My consistency approach: background first, then the character on that background, then video.
 
 ## What changed vs Kling 3.0

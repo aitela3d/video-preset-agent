@@ -1,0 +1,239 @@
+{
+  "idea": "close-up of an elderly woman laughing as she reads an old letter by the window",
+  "choice": "auto",
+  "created": "2026-11-27T02:06:11",
+  "events": [
+    {
+      "step": "planner",
+      "data": {
+        "plan": {
+          "subject": "an elderly woman with deep wrinkles, silver hair tied in a bun, wearing a beige knitted cardigan",
+          "action": "holds a yellowed paper letter with both hands, throws her head back slightly, and laughs heartily with a wide smile from start to finish",
+          "shot_size": "close-up",
+          "camera_motion": "locked camera",
+          "environment": "a cozy living room interior next to a frosted glass window with wooden frames and indoor plants in the background",
+          "lighting": "soft natural daylight streaming from the left side, warm and gentle mood",
+          "style": "realistic, natural colors",
+          "duration": 5,
+          "aspect_ratio": "16:9"
+        },
+        "t": 1.6
+      }
+    },
+    {
+      "step": "router",
+      "data": {
+        "model": "seedance",
+        "name": "Seedance 2.5",
+        "reason": "Nothing special is needed, so the default for people applies.",
+        "t": 2.7
+      }
+    },
+    {
+      "step": "writer",
+      "data": {
+        "round": 1,
+        "prompt": "An elderly woman with deep wrinkles, silver hair tied in a bun, wearing a beige knitted cardigan sits by a frosted glass window in a cozy living room, holding a yellowed paper letter with both hands and laughing heartily with a wide smile from start to finish. Close-up, locked camera. Soft natural daylight streams from the left side, warm and gentle mood, realistic style with natural colors.",
+        "t": 4.2
+      }
+    },
+    {
+      "step": "critic",
+      "data": {
+        "scores": {
+          "faithful_to_idea": 7,
+          "one_action": 6,
+          "shot_and_camera": 9,
+          "concrete_subject": 8,
+          "lighting_mood": 9,
+          "follows_guide": 8,
+          "no_contradictions": 10,
+          "plausible_motion": 9,
+          "simple_and_clear": 8
+        },
+        "total": 8.2,
+        "issues": [
+          {
+            "item": "faithful_to_idea",
+            "problem": "The prompt changes 'reading an old letter' to 'holding a yellowed paper letter... and laughing heartily with a wide smile from start to finish', missing the active reading part.",
+            "fix": "Change to holding and reading the letter.",
+            "guide_rule": "Keeps every beat of the user's idea; nothing dropped, nothing added that changes it",
+            "breaks_guide_rule": false
+          },
+          {
+            "item": "one_action",
+            "problem": "Laughing continuously from start to finish while holding a letter is a static expression rather than a complete motion arc with a start and end state.",
+            "fix": "Specify a clear motion arc, such as opening the letter and breaking into laughter.",
+            "guide_rule": "More than one main action (a jump with its flip and landing is ONE arc), or fast repeated motions.",
+            "breaks_guide_rule": true
+          }
+        ],
+        "resolved": [],
+        "verdict": "revise",
+        "round": 1,
+        "t": 5.9
+      }
+    },
+    {
+      "step": "revise",
+      "data": {
+        "round": 2,
+        "fixes": [
+          "Change to holding and reading the letter.",
+          "Specify a clear motion arc, such as opening the letter and breaking into laughter."
+        ],
+        "prompt": "An elderly woman with deep wrinkles, silver hair tied in a bun, wearing a beige knitted cardigan sits by a frosted glass window in a cozy living room. She unfolds a yellowed paper letter, looks down at the words, then throws her head back and breaks into a hearty laugh with a wide smile. Close-up, locked camera. Soft natural daylight streams from the left side, warm and gentle mood, realistic style.",
+        "t": 7.2
+      }
+    },
+    {
+      "step": "critic",
+      "data": {
+        "scores": {
+          "faithful_to_idea": 6,
+          "one_action": 6,
+          "shot_and_camera": 10,
+          "concrete_subject": 10,
+          "lighting_mood": 10,
+          "follows_guide": 8,
+          "no_contradictions": 10,
+          "plausible_motion": 8,
+          "simple_and_clear": 8
+        },
+        "total": 8.4,
+        "issues": [
+          {
+            "item": "faithful_to_idea",
+            "problem": "Prompt has her unfolding and looking at the words, but misses the actual reading part of the user's idea.",
+            "fix": "Include her reading the lines of the letter before laughing.",
+            "guide_rule": "Keeps every beat of the user's idea; nothing dropped, nothing added that changes it",
+            "breaks_guide_rule": false
+          },
+          {
+            "item": "one_action",
+            "problem": "Laughing continuously while holding a letter lacks a clear motion arc with a stated end state.",
+            "fix": "Add an explicit start and end state for the motion.",
+            "guide_rule": "More than one main action (a jump with its flip and landing is ONE arc), or fast repeated motions.",
+            "breaks_guide_rule": true
+          }
+        ],
+        "resolved": [
+          {
+            "problem": "The prompt changes 'reading an old letter' to 'holding a yellowed paper letter... and laughing heartily with a wide smile from start to finish', missing the active reading part.",
+            "item": "faithful_to_idea",
+            "resolved": false
+          },
+          {
+            "problem": "Laughing continuously from start to finish while holding a letter is a static expression rather than a complete motion arc with a start and end state.",
+            "item": "one_action",
+            "resolved": false
+          }
+        ],
+        "verdict": "revise",
+        "round": 2,
+        "t": 9.0
+      }
+    },
+    {
+      "step": "revise",
+      "data": {
+        "round": 3,
+        "fixes": [
+          "Include her reading the lines of the letter before laughing.",
+          "Add an explicit start and end state for the motion.",
+          "Still unresolved: really fix it.",
+          "Still unresolved: really fix it."
+        ],
+        "prompt": "An elderly woman with deep wrinkles, silver hair tied in a bun, wearing a beige knitted cardigan sits by a frosted glass window in a cozy living room, reads the lines of an old yellowed paper letter, then looks up and finishes by breaking into a hearty laugh with a wide smile. Close-up, locked camera. Soft natural daylight streams from the left side, warm and gentle mood, realistic style.",
+        "t": 10.3
+      }
+    },
+    {
+      "step": "critic",
+      "data": {
+        "scores": {
+          "faithful_to_idea": 10,
+          "one_action": 10,
+          "shot_and_camera": 10,
+          "concrete_subject": 10,
+          "lighting_mood": 10,
+          "follows_guide": 10,
+          "no_contradictions": 10,
+          "plausible_motion": 10,
+          "simple_and_clear": 10
+        },
+        "total": 10.0,
+        "issues": [],
+        "resolved": [
+          {
+            "problem": "The prompt changes 'reading an old letter' to 'holding a yellowed paper letter... and laughing heartily with a wide smile from start to finish', missing the active reading part.",
+            "item": "faithful_to_idea",
+            "resolved": true
+          },
+          {
+            "problem": "Laughing continuously from start to finish while holding a letter is a static expression rather than a complete motion arc with a start and end state.",
+            "item": "one_action",
+            "resolved": true
+          },
+          {
+            "problem": "Prompt has her unfolding and looking at the words, but misses the actual reading part of the user's idea.",
+            "item": "faithful_to_idea",
+            "resolved": true
+          },
+          {
+            "problem": "Laughing continuously while holding a letter lacks a clear motion arc with a stated end state.",
+            "item": "one_action",
+            "resolved": true
+          }
+        ],
+        "verdict": "pass",
+        "round": 3,
+        "t": 11.8
+      }
+    },
+    {
+      "step": "final",
+      "data": {
+        "idea": "close-up of an elderly woman laughing as she reads an old letter by the window",
+        "model": "seedance",
+        "name": "Seedance 2.5",
+        "prompt": "An elderly woman with deep wrinkles, silver hair tied in a bun, wearing a beige knitted cardigan sits by a frosted glass window in a cozy living room, reads the lines of an old yellowed paper letter, then looks up and finishes by breaking into a hearty laugh with a wide smile. Close-up, locked camera. Soft natural daylight streams from the left side, warm and gentle mood, realistic style.",
+        "template": "{subject} sits by a frosted glass window in a cozy living room, reads the lines of an old yellowed paper letter, then looks up and finishes by breaking into a hearty laugh with a wide smile. Close-up, locked camera. Soft natural daylight streams from the left side, warm and gentle mood, realistic style.",
+        "first_score": 8.2,
+        "final_score": 10.0,
+        "best_round": 3,
+        "passed": true,
+        "rounds": 3,
+        "stop": "passed (all items >= 7, average >= 8)",
+        "seconds": 11.8,
+        "tokens": {
+          "in": 16047,
+          "out": 1665
+        },
+        "cost_usd": 0.009,
+        "llm": "google/gemini-3.5-flash-lite",
+        "t": 11.8
+      }
+    }
+  ],
+  "final": {
+    "idea": "close-up of an elderly woman laughing as she reads an old letter by the window",
+    "model": "seedance",
+    "name": "Seedance 2.5",
+    "prompt": "An elderly woman with deep wrinkles, silver hair tied in a bun, wearing a beige knitted cardigan sits by a frosted glass window in a cozy living room, reads the lines of an old yellowed paper letter, then looks up and finishes by breaking into a hearty laugh with a wide smile. Close-up, locked camera. Soft natural daylight streams from the left side, warm and gentle mood, realistic style.",
+    "template": "{subject} sits by a frosted glass window in a cozy living room, reads the lines of an old yellowed paper letter, then looks up and finishes by breaking into a hearty laugh with a wide smile. Close-up, locked camera. Soft natural daylight streams from the left side, warm and gentle mood, realistic style.",
+    "first_score": 8.2,
+    "final_score": 10.0,
+    "best_round": 3,
+    "passed": true,
+    "rounds": 3,
+    "stop": "passed (all items >= 7, average >= 8)",
+    "seconds": 11.8,
+    "tokens": {
+      "in": 16047,
+      "out": 1665
+    },
+    "cost_usd": 0.009,
+    "llm": "google/gemini-3.5-flash-lite"
+  }
+}

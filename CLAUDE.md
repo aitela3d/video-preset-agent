@@ -17,7 +17,7 @@ Do not use any company name in the repo name, UI or branding.
 ## Agent design (keep these names)
 Pattern: routing + evaluator-optimizer loop (Anthropic, "Building effective agents").
 1. Planner: parse the idea into preset fields: subject, action (one motion arc from start to end state, with counts; keep every beat of the idea), shot size, camera motion (one simple move), environment, lighting (+ mood), style (one short look), duration, aspect ratio.
-2. Router: choose the target model from guides/ (Seedance / Kling / Wan) with a one-sentence reason. The user can override (Auto or a specific model).
+2. Router: choose the target model from guides/ (Seedance / Kling / Wan) with a one-sentence reason. Quality is close, so it decides by features the idea needs (dialogue, 4K, 21:9, references, cost), with a soft default when nothing decides. The user can override (Auto or a specific model).
 3. Writer: write the final prompt following the chosen model's guide, plus a reusable template with a {subject} slot (the "one-click preset" version). Write simply: plain short sentences, full motion arc first, one camera move, no stacked effects; fast body motion under 60 words.
 4. Critic: separate call, temperature 0. Sees only the user's idea, the prompt, the guide and the rubric, not the writer's reasoning. Code also gives it the word count and the effect terms found. Returns JSON: score 1-10 per rubric item, issues (rubric item, problem, concrete fix, breaks a guide rule yes/no). Code computes total (average) and verdict. From round 2 the critic also gets its previous round's issues and answers resolved yes/no for each. Caps enforced by code: a guide-rule violation or an unresolved previous issue = that item at most 6.
 5. Loop: code decides from the scores. Revise if any item < 7 or average < 8. Max 3 rounds. Stop early if the average did not improve vs the previous round. The final result is the best-scoring version, not the last one.
@@ -31,10 +31,11 @@ Lesson from a real generation test: a 10/10 critic score is not video quality. S
 - Current versions (updated 27 Nov 2026): Seedance 2.5, Kling 4.0, Wan 3.0.
 - Each file 60 lines max: strengths, weaknesses, prompt structure, ideal length, camera vocabulary, what to avoid, 2 example prompts.
 - Research current official prompting guides first (web search). Sources with links at the bottom. Mark anything uncertain as "unverified".
-- Each guide has a section "From my testing" with these rules from me. Do not change them:
-  - Seedance: best for realistic people.
-  - Kling: best for scenes without people in close-up.
-  - Wan: cheap option, weaker quality. (Wan 3.0 is API-only; open weights end at Wan 2.2.)
+- Each guide has a section "From my testing" with these rules from me. Do not change them without asking me (last updated together on 27 Nov 2026):
+  - Seedance 2.5: good for realistic people, on par with Kling 4.0 and Wan 3.0 prime; 2.5 flash is a bit weaker.
+  - Kling 4.0: as good as Seedance for people, also strong for scenes, products and nature; 4.0 Flash is a bit weaker.
+  - Wan 3.0 prime: as good as Seedance and Kling for people, usually the cheapest; lighter versions are a bit weaker. (API-only; open weights end at Wan 2.2.)
+  - On these models a plain one-line idea often works as well as an engineered prompt for simple single shots.
   - My consistency approach: background first, then the character on that background, then video.
 
 ## UI (single static/index.html, no frameworks, no external CDNs)

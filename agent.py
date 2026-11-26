@@ -34,7 +34,7 @@ EFFECTS = ["handheld", "shake", "flare", "anamorphic", "film grain", "grain", "s
 # Repeatable moves need a count; fast body motion needs a short prompt. Both are checked by code.
 MOVES = r"\b\w*(?:flips?|somersaults?|spins?|cartwheels?|twirls?)\b"  # also kickflip, backflip, heelflip
 FAST = (r"\w*flips?\b|\b(ollies?|jumps?|leaps?|sprints?|runs?|running|vaults?|kicks?|dives?|dunks?|punch(es)?|"
-        r"somersaults?|cartwheels?|skates?|skateboard\w*|surf\w*|tackles?|parkour)\b")
+        r"somersaults?|cartwheels?|skates?|skateboard\w*|surf(s|ing|ers?|boards?)?|tackles?|parkour)\b")
 # Empty praise words: every guide says to show these with materials and light instead. Checked by code.
 VAGUE = ["luxury", "luxurious", "premium", "sleek", "elegant", "stunning", "beautiful", "gorgeous", "epic",
          "cinematic", "breathtaking", "amazing", "masterpiece", "high quality", "high-quality", "ultra detailed",
@@ -125,16 +125,19 @@ def planner(idea, usage):
     return call_llm(system, "Idea: " + idea, PLAN_FIELDS, temperature=0.4, max_tokens=800, usage=usage)
 
 
-def router(plan, usage):
+def router(idea, plan, usage):
     guides = "\n\n".join("=== %s (%s) ===\n%s" % (k, v, load_guide(k)) for k, v in TARGETS.items())
     system = (
-        "You are the Router of a video prompt agent. Choose the best target video model for this shot. "
-        "The 'From my testing' rules come from the author's real generations and override general claims: "
-        "if a person (or their face, hands, body) is a visible subject -> seedance; scenes without people in "
-        "close-up (products, food, landscapes, vehicles, environments) -> kling; wan only when the idea asks "
-        "for a cheap or stylized option or quality is not critical. "
+        "You are the Router of a video prompt agent. Choose the target video model for this shot. The "
+        "author's real tests ('From my testing') show all three give similar quality for people and scenes, "
+        "so decide by what the idea needs, using the guides: readable on-screen text, 4K or 21:9 -> kling; "
+        "spoken dialogue with lip sync -> seedance; a cheap or budget option -> wan. If no need decides, use "
+        "the soft default: a person as the subject -> seedance, no people -> kling. The reason is one plain "
+        "sentence for the user that names the need that decided, e.g. 'The idea needs readable text on a "
+        "sign, which Kling renders best.' or 'Nothing special is needed, so the default for people applies.' "
         'Return JSON: {"model": "seedance" | "kling" | "wan", "reason": "<one sentence>"}.')
-    out = call_llm(system, "Guides:\n" + guides + "\n\nShot plan:\n" + json.dumps(plan, indent=1),
+    out = call_llm(system, "Guides:\n" + guides + "\n\nUser's idea: " + idea + "\n\nShot plan:\n" +
+                   json.dumps(plan, indent=1),
                    ["model", "reason"], temperature=0, max_tokens=400, usage=usage)
     if out["model"] not in TARGETS:
         raise AgentError("Router returned unknown model: %s" % out["model"])
@@ -183,6 +186,7 @@ def writer(idea, plan, target, usage, previous=None, issues=None, keep_fixed=())
     phrase = str(out["subject_phrase"]).strip()
     if len(phrase) > 2:  # a subject mention the writer left in the template becomes the slot too
         t = re.sub(re.escape(phrase), "{subject}", t, flags=re.I)
+    t = re.sub(r"\{subject\},\s+(?=[a-z])", "{subject} ", t)  # "{subject}, sits" -> "{subject} sits"
     out["template"] = re.sub(r"\b(?:its|it)/(their|they)\b|\b(their|they)/(?:its|it)\b",
                              lambda m: m.group(1) or m.group(2), t)
     # {subject} carries its own article ("a skateboarder"), so drop any article written before the slot
@@ -294,7 +298,7 @@ def run_agent(idea, choice="auto", emit=lambda step, data: None):
     if choice in TARGETS:
         route = {"model": choice, "reason": "Chosen manually by the user (override)."}
     else:
-        route = router(plan, usage)
+        route = router(idea, plan, usage)
     target = route["model"]
     step("router", {"model": target, "name": TARGETS[target], "reason": route["reason"]})
 
