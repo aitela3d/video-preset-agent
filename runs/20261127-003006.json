@@ -1,0 +1,163 @@
+{
+  "idea": "close-up of an elderly woman laughing as she reads an old letter by the window",
+  "choice": "auto",
+  "created": "2026-11-27T00:30:06",
+  "events": [
+    {
+      "step": "planner",
+      "data": {
+        "plan": {
+          "subject": "elderly woman with silver hair, wearing a beige wool cardigan",
+          "action": "laughing while reading a handwritten yellowed paper letter",
+          "shot_size": "extreme close-up",
+          "camera_motion": "static",
+          "environment": "cozy living room interior next to a wooden window frame",
+          "lighting": "soft natural morning light from the left, warm and nostalgic mood",
+          "style": "shallow depth of field, 35mm film grain, soft focus background",
+          "duration": 5,
+          "aspect_ratio": "16:9"
+        },
+        "t": 1.6
+      }
+    },
+    {
+      "step": "router",
+      "data": {
+        "model": "seedance",
+        "name": "Seedance 2.5",
+        "reason": "The prompt features a person as the visible subject, which is the primary strength of the seedance model.",
+        "t": 3.0
+      }
+    },
+    {
+      "step": "writer",
+      "data": {
+        "round": 1,
+        "prompt": "An elderly woman with silver hair, wearing a beige wool cardigan, laughs while reading a handwritten yellowed paper letter in a cozy living room next to a wooden window frame. Extreme close-up, static camera. Soft natural morning light from the left creates a warm and nostalgic mood, shallow depth of field, 35mm film grain, soft focus background. Sound: gentle rustling of paper, soft morning birdsong. No subtitles. No BGM.",
+        "t": 5.0
+      }
+    },
+    {
+      "step": "critic",
+      "data": {
+        "scores": {
+          "one_action": 10,
+          "shot_and_camera": 6,
+          "concrete_subject": 8,
+          "lighting_mood": 10,
+          "follows_guide": 9,
+          "no_contradictions": 10,
+          "plausible_motion": 10
+        },
+        "total": 9.0,
+        "issues": [
+          {
+            "item": "concrete_subject",
+            "problem": "The prompt uses 'cozy', which is a subjective mood/adjective rather than a concrete visual description.",
+            "fix": "Replace 'cozy' with specific visual details like 'cluttered with books' or 'filled with sunlight'.",
+            "guide_rule": "Concrete subject, no vague adjectives",
+            "breaks_guide_rule": false
+          },
+          {
+            "item": "shot_and_camera",
+            "problem": "The prompt specifies 'Extreme close-up' but the subject is reading a letter in a room, which usually requires a wider shot to see the letter and the person's reaction clearly.",
+            "fix": "Change to 'Medium close-up' to ensure the letter and the woman's face are both visible.",
+            "guide_rule": "Shot size: extreme wide, wide, medium, medium close-up, close-up.",
+            "breaks_guide_rule": true
+          }
+        ],
+        "resolved": [],
+        "verdict": "revise",
+        "round": 1,
+        "t": 9.1
+      }
+    },
+    {
+      "step": "revise",
+      "data": {
+        "round": 2,
+        "fixes": [
+          "Replace 'cozy' with specific visual details like 'cluttered with books' or 'filled with sunlight'.",
+          "Change to 'Medium close-up' to ensure the letter and the woman's face are both visible."
+        ],
+        "prompt": "An elderly woman with silver hair, wearing a beige wool cardigan, laughs while reading a handwritten yellowed paper letter in a living room filled with sunlight and stacks of books next to a wooden window frame. Medium close-up, static camera. Soft natural morning light from the left creates a warm and nostalgic mood, shallow depth of field, 35mm film grain, soft focus background. Sound: gentle rustling of paper, soft morning birdsong. No subtitles. No BGM.",
+        "t": 12.6
+      }
+    },
+    {
+      "step": "critic",
+      "data": {
+        "scores": {
+          "one_action": 10,
+          "shot_and_camera": 10,
+          "concrete_subject": 10,
+          "lighting_mood": 10,
+          "follows_guide": 10,
+          "no_contradictions": 10,
+          "plausible_motion": 10
+        },
+        "total": 10.0,
+        "issues": [],
+        "resolved": [
+          {
+            "problem": "The prompt uses 'cozy', which is a subjective mood/adjective rather than a concrete visual description.",
+            "item": "concrete_subject",
+            "resolved": true
+          },
+          {
+            "problem": "The prompt specifies 'Extreme close-up' but the subject is reading a letter in a room, which usually requires a wider shot to see the letter and the person's reaction clearly.",
+            "item": "shot_and_camera",
+            "resolved": true
+          }
+        ],
+        "verdict": "pass",
+        "round": 2,
+        "t": 18.1
+      }
+    },
+    {
+      "step": "final",
+      "data": {
+        "idea": "close-up of an elderly woman laughing as she reads an old letter by the window",
+        "model": "seedance",
+        "name": "Seedance 2.5",
+        "prompt": "An elderly woman with silver hair, wearing a beige wool cardigan, laughs while reading a handwritten yellowed paper letter in a living room filled with sunlight and stacks of books next to a wooden window frame. Medium close-up, static camera. Soft natural morning light from the left creates a warm and nostalgic mood, shallow depth of field, 35mm film grain, soft focus background. Sound: gentle rustling of paper, soft morning birdsong. No subtitles. No BGM.",
+        "template": "{subject} laughs while reading a handwritten yellowed paper letter in a living room filled with sunlight and stacks of books next to a wooden window frame. Medium close-up, static camera. Soft natural morning light from the left creates a warm and nostalgic mood, shallow depth of field, 35mm film grain, soft focus background. Sound: gentle rustling of paper, soft morning birdsong. No subtitles. No BGM.",
+        "first_score": 9.0,
+        "final_score": 10.0,
+        "best_round": 2,
+        "passed": true,
+        "rounds": 2,
+        "stop": "passed (all items >= 7, average >= 8)",
+        "seconds": 18.1,
+        "tokens": {
+          "in": 10011,
+          "out": 2158
+        },
+        "cost_usd": 0.0057,
+        "llm": "google/gemini-3.1-flash-lite",
+        "t": 18.1
+      }
+    }
+  ],
+  "final": {
+    "idea": "close-up of an elderly woman laughing as she reads an old letter by the window",
+    "model": "seedance",
+    "name": "Seedance 2.5",
+    "prompt": "An elderly woman with silver hair, wearing a beige wool cardigan, laughs while reading a handwritten yellowed paper letter in a living room filled with sunlight and stacks of books next to a wooden window frame. Medium close-up, static camera. Soft natural morning light from the left creates a warm and nostalgic mood, shallow depth of field, 35mm film grain, soft focus background. Sound: gentle rustling of paper, soft morning birdsong. No subtitles. No BGM.",
+    "template": "{subject} laughs while reading a handwritten yellowed paper letter in a living room filled with sunlight and stacks of books next to a wooden window frame. Medium close-up, static camera. Soft natural morning light from the left creates a warm and nostalgic mood, shallow depth of field, 35mm film grain, soft focus background. Sound: gentle rustling of paper, soft morning birdsong. No subtitles. No BGM.",
+    "first_score": 9.0,
+    "final_score": 10.0,
+    "best_round": 2,
+    "passed": true,
+    "rounds": 2,
+    "stop": "passed (all items >= 7, average >= 8)",
+    "seconds": 18.1,
+    "tokens": {
+      "in": 10011,
+      "out": 2158
+    },
+    "cost_usd": 0.0057,
+    "llm": "google/gemini-3.1-flash-lite"
+  }
+}

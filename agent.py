@@ -15,7 +15,7 @@ MIN_ITEM = 7                              # every rubric item needs at least thi
 TIMEOUT = 60                              # seconds per LLM call
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 ROOT = os.path.dirname(os.path.abspath(__file__))
-TARGETS = {"seedance": "Seedance 2.5", "kling": "Kling 3.0", "wan": "Wan 2.2"}
+TARGETS = {"seedance": "Seedance 2.5", "kling": "Kling 4.0", "wan": "Wan 3.0"}
 
 RUBRIC = {
     "one_action": "One clear main action per clip",
@@ -139,7 +139,8 @@ def writer(plan, target, usage, previous=None, issues=None, keep_fixed=()):
     user = "Shot plan:\n" + json.dumps(plan, indent=1)
     if previous:
         user += ("\n\nYour previous prompt:\n" + previous + "\n\nThe critic found these problems. Fix EVERY one "
-                 "(simplify the shot plan if needed), keep what already works:\n" +
+                 "(simplify the shot plan if needed), keep what already works, and never drop the lighting "
+                 "or the mood word. If a fix conflicts with the shot plan, the fix wins:\n" +
                  "\n".join("- %s -> FIX: %s" % (i["problem"], i["fix"]) for i in issues))
         if keep_fixed:
             user += "\n\nAlready fixed earlier, do NOT bring these back:\n" + "\n".join("- " + p for p in keep_fixed)
@@ -159,13 +160,15 @@ def critic(prompt, plan, target, usage, previous_issues=()):
         "video; 4 = likely failure. Every issue you list must lower the score of its rubric item. "
         "First audit, then score. Audit the prompt against each rubric item and the guide line by line: "
         "word count vs the guide's ideal length, structure order, vague words (cinematic, beautiful, "
-        "high-definition, stunning, epic...), things the guide says to avoid, the model's known weaknesses "
-        "(e.g. hands or faces in close-up), whether the action and camera move fit the duration. "
+        "high-definition, stunning, epic...), things the guide says to avoid, the weaknesses listed in THIS "
+        "guide (only those; a strength of the model is never a risk), whether the action and camera move fit "
+        "the duration. "
         "Vague words = empty praise/quality words with no visible meaning (cinematic, beautiful, stunning, "
         "premium, high quality, masterpiece). Mood words (calm, tense, quiet, reflective) are REQUIRED by the "
         "rubric and are not vague. One action = one main movement; a simultaneous facial expression, breathing "
         "or ambient motion (steam, hair in the wind) is NOT a second action, but sequential actions are "
-        "('then', 'and finally'). Be honest, not generous; if nothing is wrong, return no issues.\n"
+        "('then', 'and finally'). Be honest, not generous; list only real problems (never one you call "
+        "acceptable); if nothing is wrong, return no issues.\n"
         "RUBRIC:\n%s\n\nMODEL GUIDE:\n%s\n\n"
         'Return JSON in this key order: {"previous": [{"id": <n>, "resolved": "yes" | "no"}] (one entry per '
         'previous issue, empty if none given), "issues": [{"item": <rubric key>, "problem": "<short>", '

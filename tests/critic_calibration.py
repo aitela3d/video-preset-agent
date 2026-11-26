@@ -26,10 +26,11 @@ CASES = [
      "A woman in her 30s with short curly hair and a grey wool coat stands under a clear umbrella at a rainy "
      "tram stop at dusk and slowly looks up at the sky. Medium close-up, the camera pushes in slowly as she "
      "looks up. Cool blue streetlight with warm shop-window rim light, soft rain. Quiet, reflective mood. "
-     "Realistic, 35mm film look. AMBIENCE: rain on pavement, distant tram bell. Avoid: text, logos."),
+     "Realistic, 35mm film look. Sound: rain on pavement, distant tram bell. No subtitles."),
     ("good", "product shot", "kling", None,
      "A matte black ceramic coffee mug sits on a weathered oak table beside a rain-streaked window. A thin curl "
-     "of steam rises from the coffee and drifts to the left. Close-up, slow push-in toward the rim of the mug. "
+     "of steam rises from the coffee and drifts to the left. One continuous shot, no cuts: close-up, slow push-in "
+     "toward the rim of the mug. "
      "Soft grey daylight from the window on the left, warm reflection on the glaze. Calm, quiet morning mood, "
      "muted brown and grey palette, shallow depth of field."),
 ]

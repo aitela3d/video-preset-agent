@@ -6,6 +6,8 @@ Type a one-line video idea, and the agent turns it into a ready-to-use prompt fo
 
 A prototype built in a day to learn agent design. It is not used in production.
 
+Model versions updated: 27 Nov 2026 (Seedance 2.5, Kling 4.0, Wan 3.0).
+
 ## How it works
 
 The pattern is **routing + evaluator-optimizer**, from Anthropic's *Building effective agents*.
@@ -51,15 +53,18 @@ python3 app.py                                 # then open http://localhost:8000
 
 **Router:** Seedance 2.5. The subject is a person doing complex body movement, which is Seedance's strength.
 
-**Round 1, critic 8.1 (REVISE):** *one action 7 · concrete subject 6 · plausible motion 6*
-- "High-speed action photography" is a vague style word; this breaks a guide rule, so the item is capped at 6.
-- A flip during a rooftop gap jump is too much for one 6-second clip, so the motion is likely to fragment.
+**Round 1, critic 6.9 (REVISE):** *one action 5 · shot & camera 6 · concrete subject 6 · plausible motion 6*
+- A flip during a rooftop leap is a complex multi-stage action for one 5-second clip.
+- "Tracking shot" and "handheld camera shake" pull the camera in two directions.
+- "Sleek" is a vague adjective, which breaks a guide rule, so the item is capped at 6.
 
-**Round 2, critic 10.0 (PASS):** both earlier issues are marked resolved.
+**Round 2, critic 9.4 (REVISE):** all three earlier issues are resolved, but the action is still ambiguous (one action 6).
 
-> An athletic parkour runner in a black techwear hoodie and grey cargo pants jumps across a gap between two concrete apartment rooftops at dusk with distant skyscrapers. Medium long shot, camera tracking pan follows the subject through the leap. Golden hour backlighting creates long orange shadows and lens flare. The background shows subtle motion blur while the subject remains in crisp focus, 35mm film grain. AMBIENCE: wind whooshing, distant city traffic. Avoid: text, logos, slow motion.
+**Round 3, critic 10.0 (PASS):** every earlier issue is still resolved, and nothing new was found.
 
-**Template:** `{subject} jumps across a gap between two concrete apartment rooftops at dusk …`
+> An athletic parkour runner wearing a black compression shirt and grey joggers performs a jump between two urban rooftops at sunset. Medium long shot, the camera uses a tracking shot to follow the subject's trajectory across a skyline of brick chimneys and water towers. 0-5 seconds: the subject launches from the first roof, sustains a mid-air leap, and lands firmly on the second roof. Warm golden hour sunlight from behind creates sharp silhouettes and long shadows. Energetic mood, 35mm film grain. No subtitles. No BGM.
+
+**Template:** `{subject} performs a jump between two urban rooftops at sunset …`
 
 ## Cost and latency
 
@@ -67,10 +72,10 @@ From the 5 saved demo runs (person close-up, product, landscape, action, food):
 
 | | min | typical | max |
 |---|---|---|---|
-| Time per run | 13 s | ~15 s | 18 s |
-| Estimated cost per run | $0.004 | ~$0.005 | $0.006 |
+| Time per run | 15 s | ~18 s | 32 s (3 rounds) |
+| Estimated cost per run | $0.0045 | ~$0.0057 | $0.0082 |
 
-All 5 runs needed one revision (2 rounds): about 10k input and 1–2.5k output tokens per run. A full 3-round run takes about 25 s and $0.01. The cost is estimated from token counts and list prices. The whole project, including development, testing and model comparisons, cost about $0.20 in API calls.
+Every demo run needed at least one revision (four took 2 rounds, one took 3). A run uses about 10–14k input tokens and 1.3–3.2k output tokens. The cost is estimated from token counts and list prices. The whole project, including development, testing and model comparisons, cost about $0.30 in API calls.
 
 ## Critic calibration
 
@@ -78,9 +83,9 @@ All 5 runs needed one revision (2 rounds): about 10k input and 1–2.5k output t
 
 | Case | Model | Item that must fail | Score | Average | Result |
 |---|---|---|---|---|---|
-| bad: vague words | Kling | concrete subject | 2 | 6.3 | OK |
-| bad: two actions | Seedance | one action | 4 | 7.7 | OK |
-| bad: camera contradiction | Kling | no contradictions | 4 | 7.1 | OK |
+| bad: vague words | Kling | concrete subject | 2 | 5.7 | OK |
+| bad: two actions | Seedance | one action | 4 | 8.3 | OK |
+| bad: camera contradiction | Kling | no contradictions | 4 | 6.9 | OK |
 | good: person close-up | Seedance | all ≥ 7 | min 10 | 10.0 | OK |
 | good: product shot | Kling | all ≥ 7 | min 10 | 10.0 | OK |
 
@@ -96,6 +101,7 @@ The first critic was far too generous: it gave **10/10** to a prompt containing 
 4. **The code computes the total and the verdict.** The LLM never does arithmetic and never decides alone whether to stop.
 5. **Resolved checks across rounds.** In one run the critic flagged a flip as too complex, and the flip survived the rewrite unnoticed. Now every earlier issue is re-checked (*resolved yes/no*), and an unresolved one caps its item at 6. This check also caught a regression: the writer brought back "handheld shake" after fixing it one round earlier. The writer now also gets a "do not bring these back" list.
 6. **Calibrate on bad and good examples.** The calibration set caught a mistake in my own "good" example ("lowers her umbrella *and* looks up" really is two actions). All three models I tried flagged it, so the critic was right. It also led me to define the rubric more precisely: a simultaneous expression or ambient motion (steam, hair in the wind) is not a second action, but sequential actions are.
+7. **Watch what your own critic prompt suggests.** One example in the critic prompt, "known weaknesses (e.g. faces in close-up)", kept lowering scores for Seedance close-ups, even though faces are Seedance's strength. The critic now uses only the weaknesses listed in the current model's guide.
 
 I also tried swapping the critic model. DeepSeek V4 Flash and Gemini 3.5 Flash Lite were no more accurate on the calibration set, and DeepSeek was about 10× slower. The prompt and code changes mattered more than the model.
 

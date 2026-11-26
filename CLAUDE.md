@@ -27,6 +27,7 @@ Critic rubric: one clear action per clip; explicit shot size and camera motion; 
 
 ## Model guides (guides/seedance.md, kling.md, wan.md)
 - Use the current model versions available on popular video platforms; check on the web.
+- Current versions (updated 27 Nov 2026): Seedance 2.5, Kling 4.0, Wan 3.0.
 - Each file 60 lines max: strengths, weaknesses, prompt structure, ideal length, camera vocabulary, what to avoid, 2 example prompts.
 - Research current official prompting guides first (web search). Sources with links at the bottom. Mark anything uncertain as "unverified".
 - Each guide has a section "From my testing" with these rules from me. Do not change them:

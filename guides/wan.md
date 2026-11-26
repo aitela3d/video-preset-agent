@@ -1,60 +1,60 @@
-# Wan 2.2 (Alibaba, open weights) — prompt guide
+# Wan 3.0 (Alibaba) — prompt guide
 
-Version: Wan 2.2 (Jul 2025, Apache 2.0) — the latest open-weight flagship, on most video platforms and ComfyUI.
-Models: T2V-A14B, I2V-A14B (480p/720p), TI2V-5B (720p @ 24 fps, runs on a 24 GB GPU). Typical clip ~5 s.
-Newer Wan 2.5 / 2.6 / 2.7 / 3.0 (3.0 since Aug 2026, up to 30 s, 1080p) are closed, API-only.
-The prompt formula below is Alibaba's official one and works for all versions.
+Version: Wan 3.0 (API: wan3.0-video, wan3.0-video-prime), public beta Aug 2026, docs updated Nov 2026.
+Hosted API only, weights not published (unverified); the last open-weight flagship is Wan 2.2.
+2-30 s (default 5 s), 480p-1080p, 30 fps, 21:9 to 9:16. Native audio on by default; up to 20 references.
 
 ## Strengths
-- Cheap: open weights, run locally or very low price per second on hosted platforms.
-- Good motion and camera following for short single shots; strong stylized looks (anime, 3D, painterly).
-- Fine-tunable (LoRA), large community workflows.
+- Low price per second, especially at 480p/720p (exact pricing unverified).
+- Multi-reference transfer, editing, extension; follows an explicit timed shot list closely.
 
 ## Weaknesses
-- Lower detail and realism than Seedance/Kling; faces and hands degrade, especially at 480p.
-- No native audio in 2.2. Short clips only; long choreographed action breaks.
-- Exact on-screen text and lip sync are unreliable.
+- Little independent testing of quality yet; hands and limbs can deform in motion.
+- Fast repeated motions are not controllable; speech or music may be added if you do not say otherwise.
 
-## Prompt structure (order)
-Basic: Entity + Scene + Motion.
-Advanced (recommended): Entity + Scene + Motion + Aesthetic control (light, shot size, angle, lens,
-camera move) + Stylization. Cover all five.
-Image-to-video: Motion + Camera movement only (the image already gives entity, scene, style).
-For one shot on Wan 2.7+, add "Generate single shot."
-Open model accepts a negative prompt (artifacts, blur, extra limbs, text) — exact default list unverified.
+## Prompt structure (official order)
+1. Overall description (for one clip, first line: "Generate single shot.")
+2. Reference citation: Image N / Video N / Audio N (only with uploads)
+3. Shot N [start-end s]: Subject + Scene + Motion + Aesthetic control (light, shot size, angle, lens, camera move)
+4. Dialogue: Name says: "..." (write "No dialogue." if there is none)
+5. Sound effect / background music ("No background music." to turn it off)
+6. Style / Mood (at the start or the end)
+7. Negative prompt list: only unwanted items, do not repeat positives
+Multi-shot: "Shot 1 [0-3s]: ...", "Shot 2 [3-6s]: ...", no gaps or overlaps, 2-6 s per shot (pages differ).
 
 ## Ideal length
-50-100 words (unverified; official examples range from one sentence to ~80 words).
-Short prompts are often auto-expanded by an LLM ("prompt extend") — write the full version yourself.
+No official length; max 20,000 characters. 50-100 words for a single shot (unverified).
 
 ## Camera vocabulary
-Shot size: close-up, medium close-up, medium shot, full shot, extreme full shot, wide-angle.
-Angle: eye-level, low-angle, high-angle, top-down, over-the-shoulder, aerial.
-Lens: long-focus, medium focal length, ultra-wide fisheye.
-Moves: push in, pull out, pan, tilt up, tracking/follow, orbit, drone shot, fixed camera.
-Light: soft, side, rim, backlight, daylight, overcast, firelight. Composition: center, symmetrical.
+Shot size: close-up, medium close-up, medium shot, full shot, wide shot.
+Moves: static / fixed camera, push in, pull back, slow zoom out, orbit, tilt down, handheld follow,
+whip pan, FPV. Angles: low, extreme low, overhead. Speed: slow motion, high-speed (1000 fps).
+Lens: 24mm wide-angle, 85mm telephoto, shallow or deep focus.
 
 ## What to avoid
-- Rapid scene changes or more than one main action in a clip.
-- Large orbits (keep arc small; "<45 degrees" is unverified advice).
-- Real people by name, exact text on screen, lip sync to exact words.
-- Photoreal human close-ups as the hero shot (quality limit) — prefer medium/wide or stylized.
+- Fast repeated motions ("shakes head 3 times per second"); more than one main action per shot.
+- Leaving audio unspecified when you want silence: say "No dialogue." / "No background music."
+- Photoreal human close-ups as the hero shot (quality limit, see below).
 
 ## Example prompts
-1. A small orange fox with a fluffy tail trots through a snowy birch forest at dawn, stops and sniffs the air.
-   Soft side light, pale pink sky, medium shot at eye level, slow tracking shot following the fox from the side.
-   Cold, quiet mood, storybook 3D animation style. Negative: blur, extra legs, text.
-2. A steaming bowl of ramen on a dark wooden counter, chopsticks lift noodles slowly out of the broth.
-   Warm firelight from the left, close-up, fixed camera, shallow depth of field, steam rising.
-   Cozy late-night mood, realistic food photography style.
+1. Generate single shot. A small orange fox with a fluffy tail trots through a snowy birch forest at dawn,
+   stops and sniffs the air. Medium shot at eye level, slow tracking shot from the side. Soft side light,
+   pale pink sky. Sound: crunching snow, light wind. No dialogue. No background music. Style: storybook
+   3D animation, cold quiet mood. Negative prompt: extra legs, text.
+2. Generate single shot. A steaming bowl of ramen on a dark wooden counter; chopsticks lift noodles slowly
+   out of the broth. Close-up, fixed camera, 85mm, shallow focus, steam rising. Warm side light from the left.
+   Sound: soft slurp, quiet kitchen hum. No dialogue. Style: realistic food photography, cozy late-night mood.
 
 ## From my testing
 - Wan: cheap open-source option, weaker quality.
 - My consistency approach: background first, then the character on that background, then video.
 
+## What changed vs Wan 2.2
+Big change. The old formula Entity + Scene + Motion + Aesthetic + Style still sits inside each shot, but
+3.0 adds a shot list with timestamps, a "Generate single shot." line, native audio that must be specified
+(or turned off), and an ordered negative list at the end. Clips grow from ~5 s to 30 s. 3.0 is API-only.
+
 ## Sources
-- Wan 2.2 GitHub README: https://github.com/Wan-Video/Wan2.2
-- Alibaba Cloud Model Studio, text-to-video prompt guide (Oct 2026): https://www.alibabacloud.com/help/en/model-studio/text-to-video-prompt
-- Alibaba Cloud blog, Wan 2.6 (Dec 2025): https://www.alibabacloud.com/blog/602742
+- Alibaba Cloud Model Studio, wan3.0 video generation prompt guide: https://help.aliyun.com/en/model-studio/wan3-video-generation-prompt-guide
+- Alibaba Cloud Model Studio, wan3.0 video generation guide (Nov 2026): https://www.alibabacloud.com/help/en/model-studio/wan3-video-generation-guide
 - eWeek, Wan 3.0 launch (Aug 2026): https://eweek.com/news/alibaba-wan3-ai-video-documents-apac-china/
-- Atlas Cloud, Is Wan 3.0 open source? (Aug 2026): https://www.atlascloud.ai/sv/blog/tips/is-wan-3.0-open-source
